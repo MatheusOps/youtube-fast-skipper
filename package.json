@@ -1,0 +1,13 @@
+{
+  "name": "youtube-fast-skipper",
+  "version": "2.9.1",
+  "private": true,
+  "description": "Extensão Chrome para pular anúncios disponíveis, silenciar anúncios e controlar a velocidade no YouTube.",
+  "license": "MIT",
+  "engines": { "node": ">=22.12.0" },
+  "scripts": {
+    "check": "node scripts/check.cjs",
+    "test": "node tests/skip-ad.cjs && node --test tests/popup.cjs && node tests/audio.cjs && node tests/background.cjs && node tests/trusted-content.cjs && node tests/gear.cjs"
+  },
+  "devDependencies": { "jsdom": "30.1.3" }
+}

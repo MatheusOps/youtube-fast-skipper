@@ -1,0 +1,20 @@
+/* O próprio estado do player ativa e desativa a cor, inclusive na
+   navegação entre vídeos e em tela cheia. Não altera anúncios de banners. */
+.html5-video-player:is(.ad-showing, .ad-interrupting) {
+  --yt-spec-static-brand-red: #2196f3;
+  --yt-spec-themed-blue: #2196f3;
+}
+
+/* Progresso reproduzido e indicador de posição. "background" também
+   substitui os gradientes usados em algumas versões do player. */
+.html5-video-player:is(.ad-showing, .ad-interrupting) .ytp-play-progress,
+.html5-video-player:is(.ad-showing, .ad-interrupting) .ytp-swatch-background-color,
+.html5-video-player:is(.ad-showing, .ad-interrupting) .ytp-scrubber-button,
+.html5-video-player:is(.ad-showing, .ad-interrupting) .ytp-ad-progress {
+  background: #2196f3 !important;
+}
+
+/* Parte carregada: um azul mais claro para distinguir do trecho assistido. */
+.html5-video-player:is(.ad-showing, .ad-interrupting) .ytp-load-progress {
+  background: #90caf9 !important;
+}
