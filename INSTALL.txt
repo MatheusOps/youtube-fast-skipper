@@ -1,0 +1,65 @@
+YOUTUBE FAST SKIPPER — v2.9.2
+
+AN ALTERNATIVE TO AD BLOCKERS
+Ads continue loading; playback is controlled inside the player.
+Choose whether to mute, speed up, and skip when the button becomes available.
+The extension does not use blocklists or intercept advertising requests.
+The aim is to let channels' ads continue loading while improving viewing comfort.
+This does not guarantee unchanged creator revenue. Monetization depends on ad
+format, watch time, and interaction under Google Ads rules.
+
+INSTALLATION
+1. Extract the ZIP to a permanent folder.
+2. Open chrome://extensions and enable Developer mode.
+3. Click Load unpacked and select the folder containing manifest.json.
+4. Confirm Chrome's permissions and refresh the YouTube page.
+To update, replace files in the same folder, click Reload for the extension,
+and refresh your tabs. Keep only one copy enabled.
+
+CONTROLS
+Click the extension icon to open settings. The in-video gear offers the same
+options. << and >> adjust speed; clicking the speed value resets it to 1×.
+Shortcuts + or = increase speed; - decreases it. They are ignored in text fields.
+Custom speed: 0.25× to 16×, confirmed with Enter in the gear menu.
+During ads, speed adjustments set the speed to restore for content afterward.
+
+ADS
+Auto-skip ads: enables all automatic skip attempts.
+Skip Ads: uses a browser click for buttons that ignore script-generated clicks.
+Requires Auto-skip ads. Chrome may display a debugging banner during an attempt;
+the extension disconnects the session when the attempt finishes.
+Mute ads: keeps ads muted, then restores the previous mute state without changing
+the volume. Content that was already muted stays muted.
+Speed up ads: enabled uses 16×; disabled uses 1×.
+Your preferred content speed is restored after the ad.
+Ad options are enabled by default; saved disabled choices are respected.
+Skip is only activated when available and enabled. The extension does not block
+ads from loading or unlock Skip buttons early.
+
+DEBUGGING BANNER
+The extension cannot hide Chrome's warning through normal APIs. The advanced
+startup option used by developer tools depends on how Chrome is launched and
+is not configured by this package.
+Closing the banner may end the session. Cancellation is respected until you
+re-enable Skip Ads or reload the extension. Disabling Skip Ads avoids using
+debugging; script-generated clicks may not work for some ads.
+Permissions required by Chrome remain mandatory.
+
+PRIVACY AND PERMISSIONS
+storage saves preferences locally. debugger is a broad Chrome permission;
+the code uses it for the Skip button in the active YouTube tab, with context,
+focus, target, retry interval, and cleanup checks. Site access is limited to
+https://www.youtube.com/*. The extension has no servers or telemetry and does
+not collect browsing history or make network requests.
+Diagnostics stay in tab memory and are only shared if you copy them.
+
+COMPATIBILITY
+Requires Chrome 120+. Works in the main frame of www.youtube.com.
+Does not modify the mobile app or embedded videos on other sites.
+For Incognito, allow the extension in Chrome's extension settings.
+Player changes may require updates. Faster live playback depends on buffered content.
+Local tests do not replace checks on real ads.
+
+LICENSE
+MIT, as provided in LICENSE. Independent project, not affiliated with YouTube or Google.
+Source code, tests, contribution instructions, and details are in the repository README.md.

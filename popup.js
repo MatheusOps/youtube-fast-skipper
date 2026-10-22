@@ -20,14 +20,14 @@ chrome.storage.local.get(defaults).then(settings => {
       try {
         await chrome.storage.local.set({[id]:next});
         currentSettings[id]=next;
-        status.textContent = 'Configuração salva.';
+        status.textContent = 'Settings saved.';
       } catch {
         showSetting(id,currentSettings[id]);
-        status.textContent = 'Não foi possível salvar. Tente novamente.';
+        status.textContent = 'Could not save settings. Try again.';
       } finally {el.disabled=false;}
     });
   }
-}).catch(() => {status.textContent = 'Não foi possível carregar as configurações.';});
+}).catch(() => {status.textContent = 'Could not load settings.';});
 chrome.storage.onChanged?.addListener((changes,area)=>{
   if(area!=='local') return;
   for(const id of ids) if(changes[id]) {
@@ -41,23 +41,23 @@ const skipTarget = document.getElementById('skipTarget');
 const copyDiagnostic = document.getElementById('copyDiagnostic');
 const diagnosticText = document.getElementById('diagnosticText');
 let diagnosticSnapshot = null;
-const targetName = target => target ? [target.tag, target.id ? '#'+target.id : '', target.classes ? '.'+target.classes.split(/\s+/).join('.') : ''].join('').slice(0,250) : 'nenhum';
+const targetName = target => target ? [target.tag, target.id ? '#'+target.id : '', target.classes ? '.'+target.classes.split(/\s+/).join('.') : ''].join('').slice(0,250) : 'none';
 const trustedReasons={
-  'mode-disabled':'opção desativada',
-  'auto-skip-disabled':'Pular automaticamente está desativado',
-  'no-player':'player não encontrado',
-  'no-ad':'sem anúncio detectado',
-  'document-hidden':'aba não visível',
-  'non-main-player':'player principal não selecionado',
-  'invalid-target-id':'botão sem identificador compatível',
-  'unsupported-target':'alvo não é um botão compatível',
-  'offscreen':'centro do botão fora da tela',
-  'covered':'outro elemento cobre o botão',
-  'hit-test-error':'não foi possível verificar o alvo',
-  'no-eligible-target':'aguardando um botão Pular disponível',
-  'cooldown':'aguardando o intervalo entre tentativas',
-  'eligible':'botão pronto para a tentativa',
-  'pending':'tentativa em andamento'
+  'mode-disabled':'option disabled',
+  'auto-skip-disabled':'auto-skip is disabled',
+  'no-player':'player not found',
+  'no-ad':'no ad detected',
+  'document-hidden':'tab is not visible',
+  'non-main-player':'main player not selected',
+  'invalid-target-id':'button has no compatible identifier',
+  'unsupported-target':'target is not a compatible button',
+  'offscreen':'button center is off-screen',
+  'covered':'another element covers the button',
+  'hit-test-error':'could not verify the target',
+  'no-eligible-target':'waiting for an available Skip button',
+  'cooldown':'waiting for the retry interval',
+  'eligible':'button ready for an attempt',
+  'pending':'attempt in progress'
 };
 async function refreshSkipStatus() {
   try {
@@ -70,24 +70,24 @@ async function refreshSkipStatus() {
       copyDiagnostic.disabled=true;
       skipTarget.textContent='';
       diagnosticText.hidden=true;
-      skipStatus.textContent='A aba usa um script antigo ou de outra versão. Atualize a página do YouTube. Extensão: '+installedVersion+'; script: '+(result.version || 'sem versão')+'.';
+      skipStatus.textContent='This tab has an old or different script version. Refresh the YouTube page. Extension: '+installedVersion+'; script: '+(result.version || 'no version')+'.';
       return;
     }
-    skipStatus.textContent='Script '+result.version+'. '+result.status+(result.lastAction ? ' Última tentativa: '+result.lastAction : '');
+    skipStatus.textContent='Script '+result.version+'. '+result.status+(result.lastAction ? ' Last attempt: '+result.lastAction : '');
     diagnosticSnapshot={version:result.version,status:result.status,lastAction:result.lastAction,diagnostics:result.diagnostics};
     copyDiagnostic.disabled=!result.diagnostics;
     const details=result.diagnostics;
-    skipTarget.textContent=details ? 'Candidatos: '+details.candidateCount+'. Último alvo: '+targetName(details.lastTarget)+(details.lastTarget ? ' ('+details.lastTarget.attempts+' tentativas).' : '.') : '';
+    skipTarget.textContent=details ? 'Candidates: '+details.candidateCount+'. Last target: '+targetName(details.lastTarget)+(details.lastTarget ? ' ('+details.lastTarget.attempts+' attempts).' : '.') : '';
     if(details?.trustedMode) {
       const mode=details.trustedMode;
-      skipTarget.textContent+=' Pular Anúncios (clique pelo Chrome): '+(mode.enabled ? 'ativado' : 'desativado')+'. '+(trustedReasons[mode.reason]||mode.reason)+'.';
+      skipTarget.textContent+=' Skip Ads (Chrome click): '+(mode.enabled ? 'enabled' : 'disabled')+'. '+(trustedReasons[mode.reason]||mode.reason)+'.';
     }
   } catch {
     diagnosticSnapshot=null;
     copyDiagnostic.disabled=true;
     skipTarget.textContent='';
     diagnosticText.hidden=true;
-    skipStatus.textContent='Abra uma aba do YouTube atualizada para ver o diagnóstico.';
+    skipStatus.textContent='Open a refreshed YouTube tab to see diagnostics.';
   }
 }
 copyDiagnostic.addEventListener('click', async () => {
@@ -96,13 +96,13 @@ copyDiagnostic.addEventListener('click', async () => {
   try {
     await navigator.clipboard.writeText(text);
     diagnosticText.hidden=true;
-    status.textContent='Diagnóstico copiado. Cole na conversa.';
+    status.textContent='Diagnostics copied. Paste them into the conversation.';
   } catch {
     diagnosticText.value=text;
     diagnosticText.hidden=false;
     diagnosticText.focus();
     diagnosticText.select();
-    status.textContent='Selecione e copie o diagnóstico abaixo com Ctrl+C.';
+    status.textContent='Select and copy the diagnostics below with Ctrl+C.';
   }
 });
 refreshSkipStatus();

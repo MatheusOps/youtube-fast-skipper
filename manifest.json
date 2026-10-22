@@ -1,9 +1,9 @@
 {
   "manifest_version": 3,
   "name": "YouTube Fast Skipper",
-  "version": "2.9.1",
+  "version": "2.9.2",
   "minimum_chrome_version": "120",
-  "description": "Controle os anúncios no player: pular quando disponível, silenciar e acelerar opcionalmente, sem bloquear requisições de anúncios.",
+  "description": "Control ads in the player: skip when available, mute, and optionally speed them up without blocking ad requests.",
   "permissions": [
     "storage",
     "debugger"

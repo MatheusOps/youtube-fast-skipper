@@ -1,32 +1,32 @@
 <!doctype html>
-<html lang="pt-BR">
+<html lang="en">
 <head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>YouTube Fast Skipper</title><link rel="stylesheet" href="popup.css"></head>
 <body>
-  <header><img class="brand-icon" src="icons/icon48.png" alt=""><div><h1>YouTube Fast Skipper</h1><p>Controle sem bloquear anúncios.</p></div><span class="version">v2.9.1</span></header>
-  <p class="intro">Os anúncios continuam sendo carregados. Você escolhe como reproduzi-los.</p>
+  <header><img class="brand-icon" src="icons/icon48.png" alt=""><div><h1>YouTube Fast Skipper</h1><p>Control ads without blocking them.</p></div><span class="version">v2.9.2</span></header>
+  <p class="intro">Ads continue to load. You choose how to play them.</p>
   <section>
-    <h2>Anúncios</h2>
-    <label class="row"><span><strong>Pular automaticamente</strong><small>Controla todas as tentativas automáticas de pulo.</small></span><input id="autoSkip" type="checkbox"></label>
-    <label class="row"><span><strong>Silenciar anúncios</strong><small>Ao voltar ao vídeo, restaura o áudio anterior.</small></span><input id="muteAds" type="checkbox"></label>
-    <label class="row"><span><strong>Pular Anúncios</strong><small>Usa um clique do Chrome para compatibilidade com alguns botões Pular.</small></span><input id="trustedSkip" type="checkbox"></label>
-    <p class="note permission-note">O clique usa a permissão de depuração do Chrome e pode exibir um aviso do navegador.</p>
+    <h2>Ads</h2>
+    <label class="row"><span><strong>Auto-skip ads</strong><small>Controls all automatic skip attempts.</small></span><input id="autoSkip" type="checkbox"></label>
+    <label class="row"><span><strong>Mute ads</strong><small>When the video resumes, the previous audio is restored.</small></span><input id="muteAds" type="checkbox"></label>
+    <label class="row"><span><strong>Skip Ads</strong><small>Uses a Chrome click to support some Skip buttons.</small></span><input id="trustedSkip" type="checkbox"></label>
+    <p class="note permission-note">This click uses Chrome debugging permission and may show a browser warning.</p>
   </section>
   <section>
-    <h2>Velocidade</h2>
-    <label class="row"><span><strong>Acelerar anúncios</strong><small>Usar 16× quando ativado ou 1× quando desativado.</small></span><input id="accelerateAds" type="checkbox"></label>
-    <label class="row"><span><strong>Lembrar velocidade</strong><small>Usar sua preferência nos próximos vídeos.</small></span><input id="remember" type="checkbox"></label>
-    <label class="row"><span><strong>Passo dos controles</strong><small>Quanto aumentar ou diminuir por vez.</small></span><select id="step"><option value="0.05">0,05×</option><option value="0.1">0,10×</option><option value="0.25">0,25×</option><option value="0.5">0,50×</option><option value="1">1,00×</option></select></label>
-    <div class="shortcut"><span>Atalhos de velocidade</span><span><kbd>+</kbd> <kbd>−</kbd></span></div>
-    <p class="note">Clique na velocidade do vídeo para voltar a 1×. A engrenagem do YouTube Fast Skipper também abre as configurações.</p>
+    <h2>Speed</h2>
+    <label class="row"><span><strong>Speed up ads</strong><small>Use 16× when enabled or 1× when disabled.</small></span><input id="accelerateAds" type="checkbox"></label>
+    <label class="row"><span><strong>Remember speed</strong><small>Use your preference for future videos.</small></span><input id="remember" type="checkbox"></label>
+    <label class="row"><span><strong>Speed step</strong><small>How much to increase or decrease at a time.</small></span><select id="step"><option value="0.05">0.05×</option><option value="0.1">0.10×</option><option value="0.25">0.25×</option><option value="0.5">0.50×</option><option value="1">1.00×</option></select></label>
+    <div class="shortcut"><span>Speed shortcuts</span><span><kbd>+</kbd> <kbd>−</kbd></span></div>
+    <p class="note">Click the video speed to return to 1×. The YouTube Fast Skipper gear also opens settings.</p>
   </section>
-  <details id="diagnosticDetails"><summary>Diagnóstico do Pular</summary><div class="diagnostic-body">
-    <p id="skipStatus" class="note">Aguardando uma aba do YouTube.</p>
+  <details id="diagnosticDetails"><summary>Skip diagnostics</summary><div class="diagnostic-body">
+    <p id="skipStatus" class="note">Waiting for a YouTube tab.</p>
     <p id="skipTarget" class="note"></p>
-    <button id="copyDiagnostic" type="button" disabled>Copiar diagnóstico</button>
-    <textarea id="diagnosticText" aria-label="Diagnóstico para copiar" readonly hidden></textarea>
+    <button id="copyDiagnostic" type="button" disabled>Copy diagnostics</button>
+    <textarea id="diagnosticText" aria-label="Diagnostics to copy" readonly hidden></textarea>
   </div></details>
   <p id="status" role="status" aria-live="polite"></p>
-  <footer>Somente YouTube <span aria-hidden="true">·</span> Salvo neste navegador</footer>
+  <footer>YouTube only <span aria-hidden="true">·</span> Saved in this browser</footer>
   <script src="popup.js"></script>
 </body>
 </html>

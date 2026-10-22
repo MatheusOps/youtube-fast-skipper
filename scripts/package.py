@@ -31,7 +31,7 @@ def main():
         raise ValueError("Invalid extension version")
     files = {
         "manifest.json", "content.js", "background.js", "anuncio.css",
-        "popup.html", "popup.css", "popup.js", "LEIA-ME.txt", "LICENSE",
+        "popup.html", "popup.css", "popup.js", "INSTALL.txt", "LICENSE",
         *manifest["icons"].values(),
     }
     destination = ROOT / "dist" / f"youtube-fast-skipper-{version}.zip"

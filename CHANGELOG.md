@@ -1,20 +1,27 @@
 # Changelog
 
+## 2.9.2 — 2026-10-21
+
+- English interface, accessibility labels, status messages, and diagnostics.
+- English documentation, installation notes, and settings panel preview.
+- English GitHub repository description and release notes.
+- Existing settings and multilingual Skip button detection preserved.
+
 ## 2.9.1 — 2026-10-21
 
-- Novo nome: YouTube Fast Skipper, com logo e ícones próprios.
-- Opção Acelerar anúncios: escolha entre 16× e reprodução normal a 1×.
-- Rótulo Pular Anúncios para o clique do navegador.
-- README, licença MIT, guia de contribuição, testes portáveis e validação no GitHub Actions.
-- Empacotamento ZIP com lista explícita de arquivos.
+- Renamed to YouTube Fast Skipper, with a custom logo and extension icons.
+- Speed up ads option: choose 16× or normal 1× playback.
+- Skip Ads label for the browser-generated click option.
+- README, MIT license, contribution guide, portable tests, and GitHub Actions validation.
+- ZIP packaging with an explicit file list.
 
 ## 2.9.0 — 2026-10-21
 
-- Silenciamento de anúncios com restauração do estado anterior de áudio.
-- Clique do navegador ligado por padrão, preservando preferências salvas.
-- Painel escuro e diagnóstico recolhível.
+- Ad muting with restoration of the previous mute state.
+- Browser-generated clicks enabled by default, while respecting saved preferences.
+- Dark settings panel and collapsible diagnostics.
 
 ## 2.8.1 — 2026-10-21
 
-- Configuração do clique do navegador disponível na engrenagem do vídeo.
-- Diagnóstico de elegibilidade do clique.
+- Browser click setting available in the in-video gear menu.
+- Click eligibility diagnostics.

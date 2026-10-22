@@ -39,31 +39,31 @@ async function renderPopup(response, failMessage = false) {
 }
 
 test('popup identifies a matching script and preserves its diagnostic', async () => {
-  const text = await renderPopup({version,status:'Aguardando botão.',lastAction:'Clique enviado.'});
+  const text = await renderPopup({version,status:'Waiting for button.',lastAction:'Click sent.'});
   assert.ok(text.includes('Script '+version));
-  assert.match(text,/Aguardando botão/);
-  assert.match(text,/Clique enviado/);
+  assert.match(text,/Waiting for button/);
+  assert.match(text,/Click sent/);
 });
 
 test('popup detects an old injected script with no version', async () => {
-  const text = await renderPopup({status:'Botão encontrado; clique enviado.'});
-  assert.match(text,/script antigo/);
-  assert.match(text,/Atualize a página/);
-  assert.match(text,/sem versão/);
+  const text = await renderPopup({status:'Button found; click sent.'});
+  assert.match(text,/old or different script/);
+  assert.match(text,/Refresh the YouTube page/);
+  assert.match(text,/no version/);
 });
 
 test('popup detects a different script version', async () => {
-  const text = await renderPopup({version:'2.7.0',status:'Aguardando botão.'});
-  assert.match(text,/script antigo/);
+  const text = await renderPopup({version:'2.7.0',status:'Waiting for button.'});
+  assert.match(text,/old or different script/);
   assert.match(text,/script: 2\.7\.0/);
 });
 
 test('popup explains that there is no reachable content script', async () => {
-  assert.match(await renderPopup(null,true),/Abra uma aba do YouTube atualizada/);
+  assert.match(await renderPopup(null,true),/Open a refreshed YouTube tab/);
 });
 
 const diagnosticResponse = {
-  version,status:'Aguardando nova tentativa.',lastAction:'Clique enviado.',
+  version,status:'Waiting to retry.',lastAction:'Click sent.',
   diagnostics:{candidateCount:2,lastTarget:{tag:'DIV',id:'skip',classes:'ytp-ad-skip-button-container',attempts:3}},
   url:'https://should-not-be-copied.invalid/'
 };
@@ -72,7 +72,7 @@ test('popup shows the selected target and copies only the diagnostic response fi
   const popup = await openPopup(diagnosticResponse);
   try {
     assert.match(popup.document.getElementById('skipTarget').textContent,/DIV#skip\.ytp-ad-skip-button-container/);
-    assert.match(popup.document.getElementById('skipTarget').textContent,/3 tentativas/);
+    assert.match(popup.document.getElementById('skipTarget').textContent,/3 attempts/);
     const button=popup.document.getElementById('copyDiagnostic');
     assert.equal(button.disabled,false);
     button.click();
@@ -80,7 +80,7 @@ test('popup shows the selected target and copies only the diagnostic response fi
     const copied=JSON.parse(popup.copied());
     assert.deepEqual(copied.diagnostics,diagnosticResponse.diagnostics);
     assert.equal(Object.hasOwn(copied,'url'),false);
-    assert.match(popup.document.getElementById('status').textContent,/Diagnóstico copiado/);
+    assert.match(popup.document.getElementById('status').textContent,/Diagnostics copied/);
   } finally { popup.dom.window.close(); }
 });
 
@@ -98,7 +98,7 @@ test('popup provides selectable text when clipboard access is unavailable', asyn
 });
 
 test('popup cannot copy a stale or missing diagnostic', async () => {
-  for(const response of [{version:'2.7.1',diagnostics:diagnosticResponse.diagnostics},{version,status:'Aguardando.'}]) {
+  for(const response of [{version:'2.7.1',diagnostics:diagnosticResponse.diagnostics},{version,status:'Waiting.'}]) {
     const popup=await openPopup(response);
     try {
       assert.equal(popup.document.getElementById('copyDiagnostic').disabled,true);
@@ -109,11 +109,11 @@ test('popup cannot copy a stale or missing diagnostic', async () => {
 });
 
 test('popup shows whether browser click mode is enabled and explains its gate', async () => {
-  for(const [enabled,reason,expected] of [[false,'mode-disabled','opção desativada'],[true,'non-main-player','player principal não selecionado']]) {
+  for(const [enabled,reason,expected] of [[false,'mode-disabled','option disabled'],[true,'non-main-player','main player not selected']]) {
     const popup=await openPopup({...diagnosticResponse,diagnostics:{...diagnosticResponse.diagnostics,trustedMode:{enabled,pending:false,reason}}});
     try {
       const text=popup.document.getElementById('skipTarget').textContent;
-      assert.ok(text.includes('Pular Anúncios (clique pelo Chrome): '+(enabled?'ativado':'desativado')));
+      assert.ok(text.includes('Skip Ads (Chrome click): '+(enabled?'enabled':'disabled')));
       assert.ok(text.includes(expected));
       popup.document.getElementById('copyDiagnostic').click();
       await new Promise(resolve=>setImmediate(resolve));
@@ -125,10 +125,12 @@ test('popup shows whether browser click mode is enabled and explains its gate', 
 test('popup labels the ad speed control and distinguishes the automatic skip setting', async () => {
   const popup=await openPopup(diagnosticResponse);
   try {
-    assert.match(popup.document.querySelector('label[for="accelerateAds"]')?.textContent||popup.document.getElementById('accelerateAds').parentElement.textContent,/Acelerar anúncios/);
-    assert.match(popup.document.querySelector('#autoSkip').parentElement.textContent,/Controla todas as tentativas automáticas de pulo/);
-    assert.match(popup.document.querySelector('#trustedSkip').parentElement.textContent,/Pular Anúncios/);
-    assert.match(popup.document.querySelector('.permission-note').textContent,/depuração do Chrome/);
+    assert.match(popup.document.querySelector('label[for="accelerateAds"]')?.textContent||popup.document.getElementById('accelerateAds').parentElement.textContent,/Speed up ads/);
+    assert.match(popup.document.querySelector('#autoSkip').parentElement.textContent,/Controls all automatic skip attempts/);
+    assert.match(popup.document.querySelector('#trustedSkip').parentElement.textContent,/Skip Ads/);
+    assert.match(popup.document.querySelector('.permission-note').textContent,/Chrome debugging permission/);
+    assert.equal(popup.document.documentElement.lang,'en');
+    assert.deepEqual([...popup.document.querySelectorAll('#step option')].map(option=>option.textContent),['0.05×','0.10×','0.25×','0.50×','1.00×']);
   } finally {popup.dom.window.close();}
 });
 
@@ -180,6 +182,6 @@ test('failed preference writes restore the displayed state', async () => {
     await new Promise(resolve=>setImmediate(resolve));
     assert.equal(mute.checked,true);
     assert.equal(mute.disabled,false);
-    assert.match(popup.document.getElementById('status').textContent,/Não foi possível salvar/);
+    assert.match(popup.document.getElementById('status').textContent,/Could not save settings/);
   } finally {popup.dom.window.close();}
 });

@@ -27,7 +27,7 @@
   let trustedPending = false;
   let lastTrustedReason = 'mode-disabled';
   let lastSkipDiagnostics = {adDetected:false,playerFound:false,candidateCount:0,candidates:[],lastTarget:null};
-  const SCRIPT_VERSION = '2.9.1';
+  const SCRIPT_VERSION = '2.9.2';
   const clamp = n => Math.round(Math.min(16, Math.max(0.25, n)) * 100) / 100;
   const host = document.createElement('div');
   host.id = 'video-turbo-controls';
@@ -53,24 +53,24 @@
       .note {font:11px/1.5 Arial,sans-serif;color:#b5c9d9;margin:9px 0 0;}
       .status {position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);}
     </style>
-    <div class="panel" role="group" aria-label="Velocidade do vídeo">
-      <button id="gear" title="Configurações" aria-label="Configurações" aria-expanded="false">⚙</button>
-      <button id="minus" title="Diminuir velocidade (−)" aria-label="Diminuir velocidade">&lt;&lt;</button>
-      <button id="speed" aria-label="Restaurar velocidade para 1×" title="Clique para voltar a 1×">1</button>
-      <button id="plus" title="Aumentar velocidade (+)" aria-label="Aumentar velocidade">&gt;&gt;</button>
+    <div class="panel" role="group" aria-label="Video speed">
+      <button id="gear" title="Settings" aria-label="Settings" aria-expanded="false">⚙</button>
+      <button id="minus" title="Decrease speed (−)" aria-label="Decrease speed">&lt;&lt;</button>
+      <button id="speed" aria-label="Restore speed to 1×" title="Click to return to 1×">1</button>
+      <button id="plus" title="Increase speed (+)" aria-label="Increase speed">&gt;&gt;</button>
     </div>
     <div id="settings" class="settings" hidden>
-      <label>Velocidade <input id="customSpeed" type="number" min="0.25" max="16" step="0.05" aria-label="Velocidade personalizada"></label>
-      <label>Passo <select id="step"><option value="0.05">0,05</option><option value="0.1">0,10</option><option value="0.25">0,25</option><option value="0.5">0,50</option><option value="1">1,00</option></select></label>
-      <label>Lembrar velocidade <input id="remember" type="checkbox"></label>
-      <label>Pular automaticamente <input id="autoSkip" type="checkbox"></label>
-      <p class="note">Controla todas as tentativas automáticas de pulo.</p>
-      <label>Silenciar anúncios <input id="muteAds" type="checkbox"></label>
-      <label>Pular Anúncios <input id="trustedSkip" type="checkbox"></label>
-      <p class="note">Usa um clique do Chrome para compatibilidade com alguns botões Pular.</p>
-      <p class="note">O clique usa a permissão de depuração do Chrome; o aviso do navegador pode aparecer.</p>
-      <label>Acelerar anúncios <input id="accelerateAds" type="checkbox"></label>
-      <p class="note">Durante anúncios, usar 16× quando ativado ou 1× quando desativado. Depois, sua velocidade volta.</p>
+      <label>Speed <input id="customSpeed" type="number" min="0.25" max="16" step="0.05" aria-label="Custom speed"></label>
+      <label>Speed step <select id="step"><option value="0.05">0.05</option><option value="0.1">0.10</option><option value="0.25">0.25</option><option value="0.5">0.50</option><option value="1">1.00</option></select></label>
+      <label>Remember speed <input id="remember" type="checkbox"></label>
+      <label>Auto-skip ads <input id="autoSkip" type="checkbox"></label>
+      <p class="note">Controls all automatic skip attempts.</p>
+      <label>Mute ads <input id="muteAds" type="checkbox"></label>
+      <label>Skip Ads <input id="trustedSkip" type="checkbox"></label>
+      <p class="note">Uses a Chrome click to support some Skip buttons.</p>
+      <p class="note">This click uses Chrome debugging permission; a browser warning may appear.</p>
+      <label>Speed up ads <input id="accelerateAds" type="checkbox"></label>
+      <p class="note">During ads, use 16× when enabled or 1× when disabled. Your preferred speed returns afterward.</p>
     </div>
     <div class="status" role="status" aria-live="polite"></div>`;
   const input = shadow.getElementById('speed');
@@ -83,14 +83,14 @@
     const session=adAudio;
     adAudio=null;
     for (const video of session.videos) {
-      try { video.muted=session.originalMuted; } catch { /* O vídeo pode ter sido removido. */ }
+      try { video.muted=session.originalMuted; } catch { /* The video may have been removed. */ }
     }
   }
   function syncAdAudio() {
     if (!ready) return;
     let player=active?.isConnected ? active.closest('.html5-video-player') : null;
-    // Enquanto o scan escolhe um vídeo novo, a sessão ainda pertence ao
-    // mesmo player. Isso cobre a troca do elemento durante um anúncio.
+    // While the scan chooses a new video, the session still belongs to the
+    // same player. This covers an element swap during an ad.
     if (!player && !active?.isConnected)
       player=adAudio?.player?.isConnected ? adAudio.player :
         location.pathname==='/watch' ? document.querySelector('#movie_player.html5-video-player') : null;
@@ -108,7 +108,7 @@
     for (const oldVideo of adAudio.videos) {
       if (videos.includes(oldVideo)) continue;
       adAudio.videos.delete(oldVideo);
-      try {oldVideo.muted=adAudio.originalMuted;} catch { /* O vídeo anterior pode ter sido removido. */ }
+      try {oldVideo.muted=adAudio.originalMuted;} catch { /* The previous video may have been removed. */ }
     }
     for (const video of videos) {
       if (!adAudio.videos.has(video)) {
@@ -131,37 +131,37 @@
     input.textContent = input.value;
     if (shadow.activeElement !== customSpeed) customSpeed.value = String(desired);
     input.classList.toggle('ad', ad);
-    input.title = ad ? `Anúncio a ${adRate}×. Após o anúncio: ${desired}×. Clique para definir o retorno em 1×.` : 'Clique para voltar a 1×';
+    input.title = ad ? `Ad speed: ${adRate}×. After the ad: ${desired}×. Click to set the return speed to 1×.` : 'Click to return to 1×';
     shadow.getElementById('step').value = String(settings.step);
     shadow.getElementById('remember').checked = settings.remember;
     shadow.getElementById('autoSkip').checked = settings.autoSkip;
     shadow.getElementById('trustedSkip').checked = settings.trustedSkip;
     shadow.getElementById('muteAds').checked = settings.muteAds;
     shadow.getElementById('accelerateAds').checked = settings.accelerateAds;
-    status.textContent = ad ? `Anúncio ${adRate}× · depois ${desired}×` : '';
+    status.textContent = ad ? `Ad ${adRate}× · then ${desired}×` : '';
   }
   function persist(patch) {
     Object.assign(settings, patch);
     try {
       chrome.storage.local.set(patch).catch(() => {});
-    } catch { /* A aba pode estar aberta após a extensão ser recarregada. */ }
+    } catch { /* The tab may have remained open after the extension reloaded. */ }
   }
   function apply() {
     syncAdAudio();
     if (!active) {render(); return;}
     try {
       active.preservesPitch = true;
-      // A velocidade automática nunca substitui a preferência do usuário.
+      // Automatic speed never replaces the user preference.
       const rate = isAd() ? (settings.accelerateAds ? 16 : 1) : desired;
       if (Math.abs(active.defaultPlaybackRate - desired) > 0.001) active.defaultPlaybackRate = desired;
       if (Math.abs(active.playbackRate - rate) > 0.001) active.playbackRate = rate;
       render();
-    } catch {status.textContent = 'Este vídeo recusou a velocidade escolhida.';}
+    } catch {status.textContent = 'This video rejected the selected speed.';}
   }
   function choose(value) {
     const n = Number(value);
     if (!Number.isFinite(n) || n < 0.25 || n > 16) {
-      status.textContent = 'Use uma velocidade de 0,25 a 16.';
+      status.textContent = 'Enter a speed from 0.25 to 16.';
       input.value = String(desired);
       return;
     }
@@ -197,7 +197,7 @@
     if (e.key === 'Enter') {choose(customSpeed.value); customSpeed.blur();}
     e.stopPropagation();
   });
-  // Cliques nos controles não devem pausar o vídeo ou ativar atalhos do player.
+  // Control clicks should not pause the video or trigger player shortcuts.
   for (const type of ['click', 'dblclick', 'pointerdown', 'keyup']) {
     host.addEventListener(type, e => e.stopPropagation());
   }
@@ -227,7 +227,7 @@
     const width = host.getBoundingClientRect().width || 115;
     const inset = 8;
     const topInset = 0;
-    // Ancora o painel ao vídeo, sem deslocá-lo para o cabeçalho da página.
+    // Anchor the panel to the video so it does not move to the page header.
     const bar = progressVisibility();
     const visible = bar.visible && active?.isConnected && area(active)>0 && rect.top>=0 &&
       rect.top+topInset+24<=innerHeight && rect.width>=width+inset*2 &&
@@ -307,7 +307,7 @@
   }
   function trySkipAd() {
     const player=active?.closest('.html5-video-player');
-    if (!player) {lastTrustedReason=trustedGlobalGate(null).reason;lastSkipDiagnostics={adDetected:isAd(),playerFound:false,candidateCount:0,candidates:[],lastTarget:describeLastTarget()};reportSkip(settings.autoSkip ? 'Player do vídeo não encontrado.' : 'Desativado nas configurações.'); return;}
+    if (!player) {lastTrustedReason=trustedGlobalGate(null).reason;lastSkipDiagnostics={adDetected:isAd(),playerFound:false,candidateCount:0,candidates:[],lastTarget:describeLastTarget()};reportSkip(settings.autoSkip ? 'Video player not found.' : 'Disabled in settings.'); return;}
     const targets=new Set();
     const targetMeta=new Map();
     const selector='.ytp-ad-skip-button-modern, .ytp-ad-skip-button, .ytp-skip-ad-button, .ytp-ad-skip-button-container, .ytp-ad-skip-button-slot';
@@ -328,14 +328,14 @@
       const inner=[...wrapper.querySelectorAll('button,[role="button"]')];
       if (inner.length) {
         inner.forEach(button=>{targets.add(button);targetMeta.set(button,{kind:'inner',wrapper,innerCount:inner.length});});
-        // Um contêiner conhecido pode receber o clique quando seus botões
-        // internos estão ocultos; os estados de bloqueio têm prioridade.
+        // A known container can receive the click when its buttons
+        // are hidden; blocked states take priority.
         const wrapperBlocked=!!blockedReason(wrapper);
         const childrenBlocked=inner.some(button=>!!blockedReason(button));
         if (!wrapperBlocked && !childrenBlocked && inner.every(button=>!renderedState(button,player).visible)) {targets.add(wrapper);targetMeta.set(wrapper,{kind:'wrapper',wrapper,innerCount:inner.length});}
       } else {targets.add(wrapper);targetMeta.set(wrapper,{kind:'wrapper',wrapper,innerCount:0});}
     }
-    // Os nomes acessíveis cobrem layouts sem uma classe conhecida.
+    // Accessible names cover layouts without a known class.
     for (const button of player.querySelectorAll('button,[role="button"]')) {
       const names=[button.getAttribute('aria-label'),button.textContent];
       if (names.some(name=>skipLabel.test((name||'').replace(/\s+/g,' ').trim()))) {
@@ -343,7 +343,7 @@
         if (!targetMeta.has(button)) targetMeta.set(button,{kind:'label',wrapper:null,innerCount:0});
       }
     }
-    if (!settings.autoSkip) {updateSkipDiagnostics(player,[...targets],targetMeta,blockedReason);reportSkip('Desativado nas configurações.'); return;}
+    if (!settings.autoSkip) {updateSkipDiagnostics(player,[...targets],targetMeta,blockedReason);reportSkip('Disabled in settings.'); return;}
     let hidden=0, disabled=0, countdown=0, cooling=0;
     const ordered=[...targets];
     const lastIndex=ordered.indexOf(lastSkipButton);
@@ -360,13 +360,13 @@
       if (settings.trustedSkip && trustedPending) {
         lastTrustedReason='pending';
         updateSkipDiagnostics(player,[...targets],targetMeta,blockedReason);
-        reportSkip('Clique do navegador em andamento.');
+        reportSkip('Chrome click in progress.');
         return;
       }
       const attempts=previous ? previous.attempts+1 : 1;
       skipAttempts.set(button,{time:now,attempts});
-      // O service worker recebe apenas o ID. Ele encontra e verifica o botão
-      // novamente no navegador antes de enviar qualquer evento de entrada.
+      // The service worker receives only the ID. It finds and verifies the button
+      // again in the browser before sending any input event.
       const trustGate=trustedTargetGate(button,player);
       lastTrustedReason=trustGate.reason;
       const trustedHit=trustGate.eligible;
@@ -374,8 +374,8 @@
         trustedPending=true;
         lastSkipButton=button;
         updateSkipDiagnostics(player,[...targets],targetMeta,blockedReason);
-        lastSkipAction='Solicitando clique do navegador; aguardando verificação.';
-        reportSkip('Verificando botão Pular para clique do navegador.');
+        lastSkipAction='Requesting Chrome click; waiting for verification.';
+        reportSkip('Verifying the Skip button for a Chrome click.');
         const fallback=reason=>{
           let sent=false;
           try {
@@ -383,24 +383,24 @@
               button.click();
               sent=true;
             }
-          } catch { /* O alvo pode mudar durante a resposta assíncrona. */ }
-          lastSkipAction=`Clique do navegador não enviado (${reason}); ${sent ? 'clique DOM enviado' : 'alvo já indisponível'}.`;
-          reportSkip(sent ? 'Clique do navegador indisponível; clique DOM enviado.' : 'Clique do navegador indisponível; botão não disponível.');
+          } catch { /* The target may change while the asynchronous response is pending. */ }
+          lastSkipAction=`Chrome click not sent (${reason}); ${sent ? 'DOM click sent' : 'target is no longer available'}.`;
+          reportSkip(sent ? 'Chrome click unavailable; DOM click sent.' : 'Chrome click unavailable; button is not available.');
         };
         Promise.resolve().then(()=>chrome.runtime.sendMessage({type:'VIDEO_TURBO_TRUSTED_SKIP',targetId:button.id})).then(result=>{
           if (result?.ok) {
-            lastSkipAction='Clique do navegador enviado; aguardando confirmação visual.';
-            reportSkip('Clique do navegador enviado. Aguardando o botão desaparecer.');
+            lastSkipAction='Chrome click sent; waiting for visual confirmation.';
+            reportSkip('Chrome click sent. Waiting for the button to disappear.');
           } else {
-            fallback(result?.reason||'indisponível');
+            fallback(result?.reason||'unavailable');
           }
         }).catch(()=>{
-          fallback('erro de comunicação');
+          fallback('communication error');
         }).finally(()=>{trustedPending=false; schedule();});
         return;
       }
-      // Eventos sintéticos continuam sem confiança do navegador; eles só
-      // acompanham o clique DOM em uma nova tentativa.
+      // Synthetic events remain untrusted by the browser; they only
+      // accompany the DOM click on a retry.
       if (attempts>1) {
         const rect=button.getBoundingClientRect();
         const options={bubbles:true,cancelable:true,composed:true,clientX:rect.left+rect.width/2,clientY:rect.top+rect.height/2,button:0};
@@ -413,7 +413,7 @@
       const finalBlock=blockedReason(button);
       const finalVisible=button.isConnected && renderedState(button,player).visible;
       if (!button.isConnected || finalBlock || !finalVisible) {
-        lastSkipAction='Tentativa interrompida antes do clique nativo.';
+        lastSkipAction='Attempt stopped before the native click.';
         if (finalBlock==='disabled') disabled++;
         if (finalBlock==='countdown') countdown++;
         if (!finalVisible) hidden++;
@@ -422,13 +422,13 @@
       button.click();
       lastSkipButton=button;
       updateSkipDiagnostics(player,[...targets],targetMeta,blockedReason);
-      lastSkipAction=attempts===1 ? 'Clique nativo enviado; aguardando confirmação visual.' : 'Clique nativo e eventos sintéticos enviados; aguardando confirmação visual.';
-      reportSkip('Botão encontrado; clique enviado. Aguardando o botão desaparecer.');
+      lastSkipAction=attempts===1 ? 'Native click sent; waiting for visual confirmation.' : 'Native click and synthetic events sent; waiting for visual confirmation.';
+      reportSkip('Button found; click sent. Waiting for the button to disappear.');
       schedule();
       return;
     }
-    const reason=countdown ? 'Botão Pular em contagem regressiva.' : disabled ? 'Botão Pular desativado.' : cooling ? 'Aguardando nova tentativa.' : hidden ? 'Botão Pular oculto.' :
-      (isAd() ? 'Anúncio detectado; aguardando botão Pular disponível.' : 'Nenhum botão Pular disponível no player.');
+    const reason=countdown ? 'Skip button countdown is active.' : disabled ? 'Skip button is disabled.' : cooling ? 'Waiting to retry.' : hidden ? 'Skip button is hidden.' :
+      (isAd() ? 'Ad detected; waiting for an available Skip button.' : 'No available Skip button in the player.');
     updateSkipDiagnostics(player,[...targets],targetMeta,blockedReason);
     reportSkip(reason);
   }
@@ -546,7 +546,7 @@
       video.addEventListener('pointerdown', () => {preferred=video; schedule();}, true);
       video.addEventListener('ratechange', () => {
         if (video !== active) return;
-        // Anúncios e suas transições podem redefinir o player para 1×.
+        // Ads and their transitions may reset the player to 1×.
         // Nesses momentos preservamos a escolha feita nos nossos controles.
         if (isAd() || adBefore || adSettling || navigating) {apply(); return;}
         const n = video.playbackRate;
@@ -580,7 +580,7 @@
     if (action) {e.preventDefault(); e.stopImmediatePropagation(); action();}
   }, true);
   chrome.runtime?.onMessage?.addListener((message,sender,respond)=>{
-    if (message?.type==='VIDEO_TURBO_SKIP_STATUS') respond({version:SCRIPT_VERSION,status:lastSkipStatus || 'Aguardando player.',lastAction:lastSkipAction,diagnostics:{...lastSkipDiagnostics,trustedMode:describeTrustedMode()}});
+    if (message?.type==='VIDEO_TURBO_SKIP_STATUS') respond({version:SCRIPT_VERSION,status:lastSkipStatus || 'Waiting for player.',lastAction:lastSkipAction,diagnostics:{...lastSkipDiagnostics,trustedMode:describeTrustedMode()}});
   });
   observeRoot(document);
   document.addEventListener('yt-navigate-start', () => {
@@ -600,7 +600,7 @@
   document.addEventListener('fullscreenchange', () => {schedule(); apply();});
   window.addEventListener('resize', schedule);
   window.addEventListener('scroll', schedule, {passive:true, capture:true});
-  // Atualiza a posição em players animados e detecta shadow roots criadas depois.
+  // Update the position in animated players and detect shadow roots created later.
   let discoveryTick=0;
   setInterval(() => {
     if (document.hidden) return;

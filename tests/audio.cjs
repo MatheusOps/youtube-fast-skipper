@@ -84,7 +84,7 @@ async function fixture({initialMuted=false,ad=false,saved={},playerId='movie_pla
 
   h=await fixture({ad:true});
   const coexisting=h.w.document.createElement('video');
-  coexisting.muted=true; // Novo vídeo pode herdar o mute forçado.
+  coexisting.muted=true; // A replacement video may inherit the forced mute state.
   h.player.append(coexisting);
   await h.microtasks();
   assert.equal(h.video.muted,true);

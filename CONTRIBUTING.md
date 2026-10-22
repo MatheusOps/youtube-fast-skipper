@@ -1,52 +1,52 @@
-# Contribuindo
+# Contributing
 
-Use Node.js 22.12+ (24 recomendado). Instale as dependências com
-`npm ci --ignore-scripts`, execute `npm run check` e `npm test`.
-Os arquivos da extensão são carregados diretamente; não existe build obrigatório.
+Use Node.js 22.12+ (24 recommended). Install dependencies with
+`npm ci --ignore-scripts`, then run `npm run check` and `npm test`.
+Extension files are loaded directly; no build step is required.
 
-## Estrutura
+## Project structure
 
-- `manifest.json`: versão, permissões e pontos de entrada.
-- `content.js`: controles, velocidade, áudio e detecção do botão Pular.
-- `background.js`: clique do navegador e suas verificações.
-- `popup.*`: configurações e diagnóstico no ícone do Chrome.
-- `anuncio.css`: aparência da barra durante anúncios.
-- `icons/`: ícones usados pelo Chrome e pelo popup.
-- `assets/`: logo original fornecida para o projeto.
-- `tests/`: cenários locais com DOM e APIs simulados.
-- `scripts/`: validação e empacotamento reproduzível.
+- `manifest.json`: version, permissions, and entry points.
+- `content.js`: controls, playback speed, audio, and Skip button detection.
+- `background.js`: browser-generated clicks and their checks.
+- `popup.*`: settings and diagnostics in the Chrome toolbar popup.
+- `anuncio.css`: progress bar styling during ads.
+- `icons/`: icons used by Chrome and the popup.
+- `assets/`: the original logo supplied for the project.
+- `tests/`: local scenarios using a simulated DOM and browser APIs.
+- `scripts/`: validation and reproducible packaging.
 
-## Alterações
+## Making changes
 
-Preserve as verificações de remetente, endereço, foco, alvo, cancelamento e
-limpeza no worker. Não mantenha sessões de depuração abertas entre tentativas.
-Evite dependências e requisições de rede no código distribuído.
+Preserve the worker's sender, URL, focus, target, cancellation, and cleanup
+checks. Do not leave debugging sessions attached between attempts. Avoid
+runtime dependencies and network requests in the distributed extension.
 
-Adicione testes para mudanças de comportamento. Nos relatos de falha, informe
-as versões do Chrome e da extensão, os passos e, quando útil, o diagnóstico
-copiável. Revise o texto antes de compartilhá-lo e não inclua dados pessoais.
+Add tests for behavior changes. In bug reports, include the Chrome and extension
+versions, reproduction steps, and the copyable diagnostic report when helpful.
+Review the report before sharing it and do not include personal information.
 
-Faça uma conferência manual após atualizar a extensão e recarregar a aba:
+After updating the extension and refreshing the page, manually check:
 
-1. Anúncio inicialmente com som e vídeo inicialmente já mudo.
-2. Restauração do áudio e da velocidade depois do anúncio.
-3. Acelerar anúncios ligado e desligado, inclusive durante um anúncio.
-4. Botão Pular habilitado, contagem regressiva e anúncios consecutivos.
-5. Opções alteradas no popup e na engrenagem permanecendo sincronizadas.
+1. An ad that starts with sound and content that was already muted.
+2. Audio and playback speed restoration after the ad.
+3. Speed up ads enabled and disabled, including toggling during an ad.
+4. An enabled Skip button, a countdown, and consecutive ads.
+5. Settings staying synchronized between the popup and the in-video gear.
 
-## Publicação no GitHub
+## Publishing on GitHub
 
-O diretório que contém este arquivo é a raiz do repositório. Nome sugerido:
-`youtube-fast-skipper`. Envie os fontes, testes, documentação e `package-lock.json`.
-`node_modules/` e `dist/` são ignorados pelo Git.
+The folder containing this file is the repository root. The repository name is
+`youtube-fast-skipper`. Include source files, tests, documentation, and
+`package-lock.json`. Git ignores `node_modules/` and `dist/`.
 
-Antes de uma versão, sincronize o número em `manifest.json`, `package.json`,
-`content.js` e `popup.html`, atualize o lockfile e o changelog. Execute as
-verificações e `python scripts/package.py`. O ZIP em `dist/` pode ser anexado
-manualmente a uma Release; não é preciso publicar na Chrome Web Store.
-O ZIP com `source` no nome reúne o repositório para compartilhamento; o outro
-contém somente a extensão instalável e seus arquivos de instrução/licença.
+Before a release, synchronize the version in `manifest.json`, `package.json`,
+`content.js`, and `popup.html`, and update the lockfile and changelog. Run the
+checks and `python scripts/package.py`. Attach the ZIP from `dist/` to a GitHub
+Release; publishing to the Chrome Web Store is not required.
+The ZIP with `source` in its name contains the project for sharing; the other
+contains only the installable extension, installation notes, and license.
 
-O workflow valida pull requests e pushes com acesso de leitura ao repositório,
-e disponibiliza o ZIP como artefato. Ele não cria Releases nem publica código
-automaticamente em outros serviços.
+The workflow validates pull requests and pushes with read-only repository
+access, and uploads the ZIPs as artifacts. It does not create Releases or
+publish code automatically to other services.

@@ -49,7 +49,7 @@ async function countdownAndDisabledProtection(){
   assert.equal(h.clickCount(h.w.document.querySelector('#count')),0);assert.equal(h.clickCount(h.w.document.querySelector('#parent-count-inner')),0);
   assert.equal(h.clickCount(h.w.document.querySelector('#blocked')),0);
   assert.equal(h.clickCount(h.w.document.querySelector('#blocked-inner')),0);
-  assert.match(h.getStatus().status,/contagem regressiva/);
+  assert.match(h.getStatus().status,/countdown is active/);
 }
 async function normalizedAccessibleName(){
   const h=setup('<button class="unrelated" id="spaced" aria-label="  Skip   ad  "></button>');
@@ -61,7 +61,7 @@ async function pendingStatusAndVersion(){
   h.countClicks('#skip');await h.flush();const result=h.getStatus();
   const manifestPath=path.join(path.dirname(testedSourcePath),'manifest.json');
   assert.equal(result.version,JSON.parse(fs.readFileSync(manifestPath,'utf8')).version);
-  assert.match(result.status,/Aguardando o botão desaparecer/,'a sent click must remain pending until the candidate disappears');
+  assert.match(result.status,/Waiting for the button to disappear/,'a sent click must remain pending until the candidate disappears');
 }
 async function diagnosticCandidateIdentityAndHitTarget(){
   const h=setup('<div id="skip-wrap" class="ytp-ad-skip-button-modern"><button id="skip" aria-label="Pular anúncio">Pular</button></div>');
@@ -138,7 +138,7 @@ async function retryEventsRemainUntrustedAndOrdered(){
   assert.deepEqual(events,['pointerdown','mousedown','pointerup','mouseup']);
   assert.deepEqual(trust,[false,false,false,false],'synthetic pointer and mouse events are untrusted');
   assert.equal(h.clickCount(button),2);
-  assert.match(h.getStatus().lastAction,/eventos sintéticos/);
+  assert.match(h.getStatus().lastAction,/synthetic events/);
 }
 async function retryStopsWhenPointerHandlerDisablesButton(){
   const h=setup('<button id="skip" aria-label="Skip ad">Skip ad</button>');
@@ -148,8 +148,8 @@ async function retryStopsWhenPointerHandlerDisablesButton(){
   await h.flush();h.advance(600);await h.rescan();
   assert.equal(h.clickCount(button),1,'a disabled button must not receive the final native click');
   assert.deepEqual(events,['pointerdown'],'later synthetic events must stop when pointerdown changes the button');
-  assert.match(h.getStatus().status,/desativado/);
-  assert.match(h.getStatus().lastAction,/interrompida antes do clique nativo/);
+  assert.match(h.getStatus().status,/disabled/);
+  assert.match(h.getStatus().lastAction,/stopped before the native click/);
 }
 async function retryStopsWhenPointerHandlerHidesButton(){
   const h=setup('<button id="skip" aria-label="Skip ad">Skip ad</button>');
@@ -159,13 +159,13 @@ async function retryStopsWhenPointerHandlerHidesButton(){
   await h.flush();h.advance(600);await h.rescan();
   assert.equal(h.clickCount(button),1,'a hidden button must not receive the final native click');
   assert.deepEqual(events,['pointerdown'],'later synthetic events must stop when pointerdown hides the button');
-  assert.match(h.getStatus().status,/oculto/);
-  assert.match(h.getStatus().lastAction,/interrompida antes do clique nativo/);
+  assert.match(h.getStatus().status,/hidden/);
+  assert.match(h.getStatus().lastAction,/stopped before the native click/);
 }
 async function disabledSetting(){
   const h=setup('<button id="own" aria-label="Skip ad">Skip ad</button>',{autoSkip:false});
   const own=h.countClicks('#own');await h.flush();
-  assert.equal(h.clickCount(own),0);assert.match(h.getStatus().status,/Desativado/);
+  assert.equal(h.clickCount(own),0);assert.match(h.getStatus().status,/Disabled/);
 }
 async function outsidePlayerIgnored(){
   const h=setup('<button id="own" aria-label="Skip ad">Skip ad</button>');
@@ -187,11 +187,11 @@ async function adAccelerationPreferenceAndLiveToggle(){
   assert.equal(toggle.checked,true,'acceleration is enabled by default');
   assert.equal(video.playbackRate,16);
   assert.equal(controls.getElementById('speed').value,'16');
-  assert.match(controls.querySelector('.status').textContent,/Anúncio 16×/);
+  assert.match(controls.querySelector('.status').textContent,/Ad 16×/);
   toggle.click();
   assert.equal(video.playbackRate,1,'turning acceleration off applies 1× during the active ad');
   assert.equal(controls.getElementById('speed').value,'1');
-  assert.match(controls.querySelector('.status').textContent,/Anúncio 1×/);
+  assert.match(controls.querySelector('.status').textContent,/Ad 1×/);
   assert.equal(h.getSaved().accelerateAds,false,'turning acceleration off saves the preference');
   toggle.click();
   assert.equal(h.getSaved().accelerateAds,true,'turning acceleration on saves the preference');
@@ -204,7 +204,7 @@ async function adAccelerationPreferenceAndLiveToggle(){
   controls=h.w.document.getElementById('video-turbo-controls').shadowRoot;
   assert.equal(controls.getElementById('accelerateAds').checked,false,'an explicit opt-out is loaded');
   assert.equal(video.playbackRate,1,'explicit opt-out keeps the ad at normal speed');
-  assert.match(controls.getElementById('speed').title,/Anúncio a 1×/);
+  assert.match(controls.getElementById('speed').title,/Ad speed: 1×/);
   h.w.document.querySelector('#movie_player').classList.remove('ad-showing');await h.rescan();
   assert.equal(video.playbackRate,1.75,'the saved desired speed returns after a normal-speed ad');
 }
