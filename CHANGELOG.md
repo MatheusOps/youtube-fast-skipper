@@ -1,5 +1,12 @@
 # Changelog
 
+## 2.10.0 — 2026-10-22
+
+- Added playback speed controls for YouTube Shorts.
+- Controls follow the active Short without relying on the regular progress bar.
+- Preserved the selected speed across Shorts navigation and video element reuse.
+- Added regression coverage for Shorts selection, visibility, and speed controls.
+
 ## 2.9.2 — 2026-10-21
 
 - English interface, accessibility labels, status messages, and diagnostics.

@@ -27,7 +27,7 @@
   let trustedPending = false;
   let lastTrustedReason = 'mode-disabled';
   let lastSkipDiagnostics = {adDetected:false,playerFound:false,candidateCount:0,candidates:[],lastTarget:null};
-  const SCRIPT_VERSION = '2.9.2';
+  const SCRIPT_VERSION = '2.10.0';
   const clamp = n => Math.round(Math.min(16, Math.max(0.25, n)) * 100) / 100;
   const host = document.createElement('div');
   host.id = 'video-turbo-controls';
@@ -77,6 +77,25 @@
   const status = shadow.querySelector('.status');
   const customSpeed = shadow.getElementById('customSpeed');
   const isYouTube = /(^|\.)youtube(?:-nocookie)?\.com$/.test(location.hostname);
+  const isShortsRoute = () => /^\/shorts(?:\/|$)/.test(location.pathname);
+  const shortsCard = video => video?.closest('ytd-reel-video-renderer, yt-reel-video-renderer');
+  function markedActive(card) {
+    if (!card) return false;
+    let explicit=false;
+    for (const name of ['is-active','active','aria-current']) {
+      if (!card.hasAttribute(name)) continue;
+      explicit=true;
+      const value = (card.getAttribute(name) || '').trim().toLowerCase();
+      if (value === '' || !['false','0','off','no','none'].includes(value)) return true;
+    }
+    if (explicit) return false;
+    return card.classList.contains('is-active') || card.classList.contains('active');
+  }
+  function explicitlyInactive(card) {
+    if (!card) return false;
+    const names=['is-active','active','aria-current'].filter(name=>card.hasAttribute(name));
+    return names.length>0 && names.every(name=>['false','0','off','no','none'].includes((card.getAttribute(name)||'').trim().toLowerCase()));
+  }
   const isAd = () => isYouTube && !!active?.closest('.html5-video-player')?.matches('.ad-showing, .ad-interrupting');
   function restoreAdAudio() {
     if (!adAudio) return;
@@ -210,16 +229,33 @@
     for (let el=node; el; el=el.parentNode || el.host) if (el===parent) return true;
     return false;
   }
+  function visibleBounds(element) {
+    if (!element?.isConnected) return null;
+    const r=element.getBoundingClientRect();
+    let left=Math.max(r.left,0),top=Math.max(r.top,0),right=Math.min(r.right,innerWidth),bottom=Math.min(r.bottom,innerHeight);
+    let opacity=1;
+    for (let el=element; el; el=el.parentElement) {
+      const style=getComputedStyle(el);
+      if (el.hidden || style.visibility==='hidden' || style.display==='none') return null;
+      const alpha=Number.parseFloat(style.opacity);
+      if (Number.isFinite(alpha)) opacity*=alpha;
+      if (opacity<=0.01) return null;
+      const clipsX=!!style.overflow && style.overflow!=='visible' || !!style.overflowX && style.overflowX!=='visible';
+      const clipsY=!!style.overflow && style.overflow!=='visible' || !!style.overflowY && style.overflowY!=='visible';
+      if (el!==element && (clipsX || clipsY)) {
+        const clip=el.getBoundingClientRect();
+        if (clipsX) {left=Math.max(left,clip.left);right=Math.min(right,clip.right);}
+        if (clipsY) {top=Math.max(top,clip.top);bottom=Math.min(bottom,clip.bottom);}
+      }
+    }
+    return {left,top,right,bottom,opacity};
+  }
   function area(video) {
-    if (!video.isConnected || video.hidden) return 0;
-    const fs = fullscreen();
-    if (fs && !within(fs, video)) return 0;
-    const style = getComputedStyle(video);
-    if (style.visibility === 'hidden' || style.display === 'none' || style.opacity === '0') return 0;
-    const r = video.getBoundingClientRect();
-    const width = Math.max(0, Math.min(r.right, innerWidth) - Math.max(r.left, 0));
-    const height = Math.max(0, Math.min(r.bottom, innerHeight) - Math.max(r.top, 0));
-    return width * height;
+    if (!video?.isConnected) return 0;
+    const fs=fullscreen();
+    if (fs && !within(fs,video)) return 0;
+    const bounds=visibleBounds(video);
+    return bounds ? Math.max(0,bounds.right-bounds.left)*Math.max(0,bounds.bottom-bounds.top) : 0;
   }
   function position() {
     const fs = fullscreen();
@@ -229,11 +265,14 @@
     const topInset = 0;
     // Anchor the panel to the video so it does not move to the page header.
     const bar = progressVisibility();
-    const visible = bar.visible && active?.isConnected && area(active)>0 && rect.top>=0 &&
+    const shorts=isShortsRoute();
+    const card=shorts ? shortsCard(active) : null;
+    const bounds=shorts ? visibleBounds(active) : null;
+    const visible = (shorts ? !!card && !!bounds && bounds.right-bounds.left>=width+inset*2 && bounds.bottom-bounds.top>=24 : bar.visible && rect.top>=0) && active?.isConnected && area(active)>0 &&
       rect.top+topInset+24<=innerHeight && rect.width>=width+inset*2 &&
       fs?.tagName !== 'VIDEO' && (!fs || within(fs,active));
     host.style.setProperty('display', visible ? 'block' : 'none', 'important');
-    host.style.setProperty('opacity', String(bar.opacity), 'important');
+    host.style.setProperty('opacity', String(shorts ? bounds?.opacity || 0 : bar.opacity), 'important');
     if (!visible) {settingsPanel.hidden=true; gear.setAttribute('aria-expanded','false');}
     if (!active) return;
     const parent = fs && fs.tagName !== 'VIDEO' ? fs : document.documentElement;
@@ -242,8 +281,10 @@
     const scaleX = fs && base.width && fs.clientWidth ? fs.clientWidth/base.width : 1;
     const scaleY = fs && base.height && fs.clientHeight ? fs.clientHeight/base.height : 1;
     host.style.setProperty('position', fs ? 'absolute' : 'fixed', 'important');
-    host.style.setProperty('top', ((rect.top-base.top+topInset)*scaleY)+'px', 'important');
-    host.style.setProperty('left', ((rect.right-base.left-width-inset)*scaleX)+'px', 'important');
+    const shortsTop=shorts && bounds ? Math.max(bounds.top,Math.min(rect.top,bounds.bottom-24)) : rect.top;
+    const shortsLeft=shorts && bounds ? Math.max(bounds.left+inset,Math.min(rect.right-width-inset,bounds.right-width-inset)) : rect.right-width-inset;
+    host.style.setProperty('top', ((shortsTop-base.top+topInset)*scaleY)+'px', 'important');
+    host.style.setProperty('left', ((shortsLeft-base.left)*scaleX)+'px', 'important');
     host.style.setProperty('right', 'auto', 'important');
   }
   function discover(node) {
@@ -268,7 +309,7 @@
       if (changed) {syncAdAudio(); schedule();}
     });
     roots.set(root, observer);
-    observer.observe(root, {childList:true, subtree:true, attributes:true, attributeFilter:['class','style','hidden','disabled','aria-disabled','aria-hidden','inert']});
+    observer.observe(root, {childList:true, subtree:true, attributes:true, attributeFilter:['class','style','hidden','disabled','aria-disabled','aria-hidden','aria-current','is-active','active','inert']});
     discover(root);
     root.addEventListener('playing', schedule, true);
     root.addEventListener('pause', schedule, true);
@@ -532,7 +573,15 @@
     const visible = videos.filter(v => area(v) > 0);
     visible.sort((a,b) => Number(a.paused) - Number(b.paused) || area(b)-area(a));
     const main = location.pathname==='/watch' ? videos.find(v=>v.closest('#movie_player')) : null;
-    const next = main || (preferred && visible.includes(preferred) ? preferred : visible[0] || (active?.isConnected ? active : null));
+    let next;
+    if (isShortsRoute()) {
+      const shorts=visible.filter(video=>shortsCard(video));
+      shorts.sort((a,b)=>area(b)-area(a)||Number(a.paused)-Number(b.paused));
+      const marked=shorts.filter(video=>markedActive(shortsCard(video)));
+      const eligible=shorts.filter(video=>!explicitlyInactive(shortsCard(video)));
+      const pool=marked.length ? marked : eligible.length ? eligible : shorts;
+      next=pool[0] || null;
+    } else next = main || (preferred && visible.includes(preferred) ? preferred : visible[0] || (active?.isConnected ? active : null));
     if (next !== active) {
       active = next;
       if (active) apply(); else host.remove();
@@ -547,8 +596,8 @@
       video.addEventListener('ratechange', () => {
         if (video !== active) return;
         // Ads and their transitions may reset the player to 1×.
-        // Nesses momentos preservamos a escolha feita nos nossos controles.
-        if (isAd() || adBefore || adSettling || navigating) {apply(); return;}
+        // Preserve the speed chosen with our controls during these transitions.
+        if (isShortsRoute() || isAd() || adBefore || adSettling || navigating) {apply(); return;}
         const n = video.playbackRate;
         if (Number.isFinite(n) && n >= 0.25 && n <= 16 && Math.abs(n-desired)>0.001) {
           desired = clamp(n);

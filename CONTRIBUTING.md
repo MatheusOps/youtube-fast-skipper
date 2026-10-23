@@ -33,6 +33,8 @@ After updating the extension and refreshing the page, manually check:
 3. Speed up ads enabled and disabled, including toggling during an ad.
 4. An enabled Skip button, a countdown, and consecutive ads.
 5. Settings staying synchronized between the popup and the in-video gear.
+6. Shorts speed controls with no regular progress bar, scrolling to the next
+   Short, reusing a video element, and returning to a regular video.
 
 ## Publishing on GitHub
 

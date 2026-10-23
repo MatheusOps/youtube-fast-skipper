@@ -30,6 +30,7 @@ impact on monetization when skipping or speeding up ads.
 - Lets you choose between **16×** ad playback and normal **1×** playback.
 - Restores your preferred content speed after each ad.
 - Controls playback from **0.25× to 16×**, with shortcuts and saved preferences.
+- Supports **YouTube Shorts**, with controls that follow the active Short as you scroll.
 - Offers settings in the Chrome toolbar popup and the gear inside the video.
 - Includes a copyable diagnostic report to help investigate skipping issues.
 
@@ -75,7 +76,19 @@ In the video panel, `<<` and `>>` adjust speed. Clicking the speed value resets
 it to 1×. The gear includes a custom speed field. During ads, these adjustments
 set the speed to restore when content resumes. Use `+` or `=` to increase speed
 and `-` to decrease it; shortcuts are ignored in text fields. The panel follows
-the visibility of YouTube's native progress bar.
+the visibility of YouTube's native progress bar on regular videos.
+
+## YouTube Shorts
+
+Open a Short on `www.youtube.com/shorts/`. The speed controls appear on the
+active video even when the regular YouTube progress bar is unavailable. Use
+`<<`, `>>`, the custom speed field in the gear menu, or the `+` / `-` shortcuts
+to adjust playback from **0.25× to 16×**. Click the speed value to return to 1×.
+
+The selected speed carries over as you scroll to the next Short, including when
+YouTube reuses the same video element. Regular videos and Shorts share the same
+speed preference; **Remember speed** saves it for future pages. Controls target
+the active Short rather than preloaded videos in the feed.
 
 ## Why does a debugging banner appear?
 
@@ -130,14 +143,14 @@ npm test
 python scripts/package.py
 ```
 
-The installable ZIP is written to `dist/youtube-fast-skipper-2.9.2.zip`.
+The installable ZIP is written to `dist/youtube-fast-skipper-2.10.0.zip`.
 Packaging uses an explicit file list to keep tests, dependencies, and personal
 files out of the installable package. No build step is needed to run the extension.
-`dist/youtube-fast-skipper-source-2.9.2.zip` contains the source and documentation
+`dist/youtube-fast-skipper-source-2.10.0.zip` contains the source and documentation
 for sharing on GitHub, without installed dependencies or local Git history.
 
 Tests cover audio restoration, button selection, retries, worker checks,
-preferences, and interfaces. They run locally with simulated DOM and browser
+preferences, Shorts navigation, and interfaces. They run locally with simulated DOM and browser
 APIs; passing tests alone does not prove the outcome on real ads. After player
 changes, manually verify skipping, audio, and playback speed on YouTube.
 

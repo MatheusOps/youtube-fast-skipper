@@ -1,4 +1,4 @@
-YOUTUBE FAST SKIPPER — v2.9.2
+YOUTUBE FAST SKIPPER — v2.10.0
 
 AN ALTERNATIVE TO AD BLOCKERS
 Ads continue loading; playback is controlled inside the player.
@@ -22,6 +22,13 @@ options. << and >> adjust speed; clicking the speed value resets it to 1×.
 Shortcuts + or = increase speed; - decreases it. They are ignored in text fields.
 Custom speed: 0.25× to 16×, confirmed with Enter in the gear menu.
 During ads, speed adjustments set the speed to restore for content afterward.
+
+YOUTUBE SHORTS
+On www.youtube.com/shorts/, use the same speed controls and keyboard shortcuts.
+Controls follow the active Short, even without a regular progress bar.
+Choose a custom speed from 0.25× to 16× or click the speed value to return to 1×.
+The selected speed carries over to the next Short. Regular videos and Shorts
+share the same preference; Remember speed saves it for future pages.
 
 ADS
 Auto-skip ads: enables all automatic skip attempts.
