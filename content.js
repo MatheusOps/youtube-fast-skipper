@@ -27,7 +27,7 @@
   let trustedPending = false;
   let lastTrustedReason = 'mode-disabled';
   let lastSkipDiagnostics = {adDetected:false,playerFound:false,candidateCount:0,candidates:[],lastTarget:null};
-  const SCRIPT_VERSION = '2.10.0';
+  const SCRIPT_VERSION = '2.10.1';
   const clamp = n => Math.round(Math.min(16, Math.max(0.25, n)) * 100) / 100;
   const host = document.createElement('div');
   host.id = 'video-turbo-controls';
@@ -78,7 +78,16 @@
   const customSpeed = shadow.getElementById('customSpeed');
   const isYouTube = /(^|\.)youtube(?:-nocookie)?\.com$/.test(location.hostname);
   const isShortsRoute = () => /^\/shorts(?:\/|$)/.test(location.pathname);
-  const shortsCard = video => video?.closest('ytd-reel-video-renderer, yt-reel-video-renderer');
+  function composedParent(element) {
+    if (element?.parentElement) return element.parentElement;
+    const root=element?.getRootNode?.();
+    return root instanceof ShadowRoot ? root.host : null;
+  }
+  function shortsCard(video) {
+    for (let el=video; el; el=composedParent(el))
+      if (el.matches?.('ytd-reel-video-renderer, yt-reel-video-renderer')) return el;
+    return null;
+  }
   function markedActive(card) {
     if (!card) return false;
     let explicit=false;
@@ -229,20 +238,38 @@
     for (let el=node; el; el=el.parentNode || el.host) if (el===parent) return true;
     return false;
   }
+  function fixedContainingBlock(style) {
+    return [style.transform,style.perspective,style.filter,style.backdropFilter].some(value=>value && value!=='none') ||
+      /(?:^|\s)(?:layout|paint|strict|content)(?:\s|$)/.test(style.contain) ||
+      /(?:transform|perspective|filter|backdrop-filter|contain)/.test(style.willChange);
+  }
+  function absoluteContainingBlock(style) {
+    return style.position && style.position!=='static' || fixedContainingBlock(style);
+  }
   function visibleBounds(element) {
     if (!element?.isConnected) return null;
     const r=element.getBoundingClientRect();
     let left=Math.max(r.left,0),top=Math.max(r.top,0),right=Math.min(r.right,innerWidth),bottom=Math.min(r.bottom,innerHeight);
     let opacity=1;
-    for (let el=element; el; el=el.parentElement) {
+    const ancestors=[];
+    for (let el=element; el; el=composedParent(el)) ancestors.push(el);
+    const positionedIndex=ancestors.findIndex(el=>['fixed','absolute'].includes(getComputedStyle(el).position));
+    const positionedStyle=positionedIndex>=0 ? getComputedStyle(ancestors[positionedIndex]) : null;
+    const containingIndex=positionedIndex>=0 ? ancestors.findIndex((el,index)=>index>positionedIndex &&
+      (positionedStyle.position==='fixed' ? fixedContainingBlock(getComputedStyle(el)) : absoluteContainingBlock(getComputedStyle(el)))) : -1;
+    for (const [index,el] of ancestors.entries()) {
       const style=getComputedStyle(el);
       if (el.hidden || style.visibility==='hidden' || style.display==='none') return null;
       const alpha=Number.parseFloat(style.opacity);
       if (Number.isFinite(alpha)) opacity*=alpha;
       if (opacity<=0.01) return null;
-      const clipsX=!!style.overflow && style.overflow!=='visible' || !!style.overflowX && style.overflowX!=='visible';
-      const clipsY=!!style.overflow && style.overflow!=='visible' || !!style.overflowY && style.overflowY!=='visible';
-      if (el!==element && (clipsX || clipsY)) {
+      const display=style.display;
+      const hasBox=display!=='contents' && (!display.startsWith('inline') || /inline-(?:block|flex|grid|table)/.test(display));
+      const overflow=style.overflow;
+      const clipsX=['hidden','clip','auto','scroll'].includes(style.overflowX) || ['hidden','clip','auto','scroll'].includes(overflow);
+      const clipsY=['hidden','clip','auto','scroll'].includes(style.overflowY) || ['hidden','clip','auto','scroll'].includes(overflow);
+      const positionedDescendantIsContained=positionedIndex<0 || index<=positionedIndex || containingIndex>=0 && index>=containingIndex;
+      if (index>0 && el!==document.documentElement && el!==document.body && hasBox && positionedDescendantIsContained && (clipsX || clipsY)) {
         const clip=el.getBoundingClientRect();
         if (clipsX) {left=Math.max(left,clip.left);right=Math.min(right,clip.right);}
         if (clipsY) {top=Math.max(top,clip.top);bottom=Math.min(bottom,clip.bottom);}
@@ -254,6 +281,13 @@
     if (!video?.isConnected) return 0;
     const fs=fullscreen();
     if (fs && !within(fs,video)) return 0;
+    if (!isShortsRoute()) {
+      if (video.hidden) return 0;
+      const style=getComputedStyle(video);
+      if (style.visibility==='hidden' || style.display==='none' || style.opacity==='0') return 0;
+      const r=video.getBoundingClientRect();
+      return Math.max(0,Math.min(r.right,innerWidth)-Math.max(r.left,0))*Math.max(0,Math.min(r.bottom,innerHeight)-Math.max(r.top,0));
+    }
     const bounds=visibleBounds(video);
     return bounds ? Math.max(0,bounds.right-bounds.left)*Math.max(0,bounds.bottom-bounds.top) : 0;
   }
@@ -266,9 +300,8 @@
     // Anchor the panel to the video so it does not move to the page header.
     const bar = progressVisibility();
     const shorts=isShortsRoute();
-    const card=shorts ? shortsCard(active) : null;
     const bounds=shorts ? visibleBounds(active) : null;
-    const visible = (shorts ? !!card && !!bounds && bounds.right-bounds.left>=width+inset*2 && bounds.bottom-bounds.top>=24 : bar.visible && rect.top>=0) && active?.isConnected && area(active)>0 &&
+    const visible = (shorts ? !!bounds && bounds.right-bounds.left>=width+inset*2 && bounds.bottom-bounds.top>=24 : bar.visible && rect.top>=0) && active?.isConnected && area(active)>0 &&
       rect.top+topInset+24<=innerHeight && rect.width>=width+inset*2 &&
       fs?.tagName !== 'VIDEO' && (!fs || within(fs,active));
     host.style.setProperty('display', visible ? 'block' : 'none', 'important');
@@ -579,7 +612,8 @@
       shorts.sort((a,b)=>area(b)-area(a)||Number(a.paused)-Number(b.paused));
       const marked=shorts.filter(video=>markedActive(shortsCard(video)));
       const eligible=shorts.filter(video=>!explicitlyInactive(shortsCard(video)));
-      const pool=marked.length ? marked : eligible.length ? eligible : shorts;
+      const fallback=visible.slice().sort((a,b)=>area(b)-area(a)||Number(a.paused)-Number(b.paused));
+      const pool=marked.length ? marked : eligible.length ? eligible : shorts.length ? shorts : fallback;
       next=pool[0] || null;
     } else next = main || (preferred && visible.includes(preferred) ? preferred : visible[0] || (active?.isConnected ? active : null));
     if (next !== active) {

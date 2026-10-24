@@ -5,10 +5,11 @@ const {JSDOM}=require('jsdom');
 
 const source=fs.readFileSync(path.join(__dirname,'..','content.js'),'utf8');
 
-async function fixture({url='https://www.youtube.com/shorts/one',cards=[],saved={}}={}) {
-  const markup=cards.map((card,index)=>`<ytd-reel-video-renderer id="${card.id||`card${index}`}" ${card.attrs||''} ${card.style||''}><div class="html5-video-player ${card.playerClass||''}"><video id="${card.video||`video${index}`}" ${card.videoStyle||''}></video></div></ytd-reel-video-renderer>`).join('');
+async function fixture({url='https://www.youtube.com/shorts/one',cards=[],saved={},markup:providedMarkup,rootRect,rootOverflow=false,extraRects={},allowMissingHost=false}={}) {
+  const markup=providedMarkup ?? cards.map((card,index)=>`<ytd-reel-video-renderer id="${card.id||`card${index}`}" ${card.attrs||''} ${card.style||''}><div class="html5-video-player ${card.playerClass||''}"><video id="${card.video||`video${index}`}" ${card.videoStyle||''}></video></div></ytd-reel-video-renderer>`).join('');
   const dom=new JSDOM(`<!doctype html><body>${markup}</body>`,{url,runScripts:'outside-only',pretendToBeVisual:true});
   const w=dom.window;
+  if(rootOverflow){w.document.documentElement.style.overflow='hidden';w.document.body.style.overflow='hidden';}
   w.innerWidth=1280;w.innerHeight=720;
   w.queue=[];
   w.requestAnimationFrame=fn=>{w.queue.push(fn);return w.queue.length;};
@@ -19,7 +20,9 @@ async function fixture({url='https://www.youtube.com/shorts/one',cards=[],saved=
     rects.set(id,card.rect||{left:100,top:i*400,right:460,bottom:i*400+640,width:360,height:640});
     if(card.clipRect)rects.set(card.id||`card${i}`,card.clipRect);
   }
+  for(const [id,rect] of Object.entries(extraRects))rects.set(id,rect);
   w.HTMLElement.prototype.getBoundingClientRect=function(){
+    if(rootRect && (this===w.document.documentElement || this===w.document.body))return rootRect;
     if(rects.has(this.id))return rects.get(this.id);
     if(this.id==='video-turbo-controls')return {left:0,top:0,right:115,bottom:24,width:115,height:24};
     return {left:0,top:0,right:1280,bottom:720,width:1280,height:720};
@@ -37,8 +40,8 @@ async function fixture({url='https://www.youtube.com/shorts/one',cards=[],saved=
   };
   await scan();
   const host=w.document.getElementById('video-turbo-controls');
-  assert.ok(host?.shadowRoot,'speed controls mount on the page');
-  return {w,host,shadow:host.shadowRoot,writes,rects,scan,flushMicrotasks,fireChange(changes){onChanged(changes,'local');}};
+  assert.ok(allowMissingHost || host?.shadowRoot,'speed controls mount on the page');
+  return {w,host,shadow:host?.shadowRoot,writes,rects,scan,flushMicrotasks,fireChange(changes){onChanged(changes,'local');}};
 }
 
 (async()=>{
@@ -93,7 +96,7 @@ async function fixture({url='https://www.youtube.com/shorts/one',cards=[],saved=
   assert.equal(h.host.style.display,'block','a Short partially clipped at the viewport top can still show controls');
   assert.equal(h.host.style.top,'0px','controls stay within the visible clipped portion of the Short');
 
-  h=await fixture({cards:[{attrs:'is-active="true"',style:'style="overflow:hidden"',rect:{left:80,top:80,right:460,bottom:720,width:380,height:640},clipRect:{left:100,top:100,right:350,bottom:500,width:250,height:400}}]});
+  h=await fixture({cards:[{attrs:'is-active="true"',style:'style="display:block;overflow:hidden"',rect:{left:80,top:80,right:460,bottom:720,width:380,height:640},clipRect:{left:100,top:100,right:350,bottom:500,width:250,height:400}}]});
   assert.equal(h.host.style.display,'block','controls remain eligible inside a clipped carousel card');
   assert.equal(h.host.style.top,'100px','controls respect the card clip top');
   assert.equal(Number.parseFloat(h.host.style.left)+115,342,'controls keep the existing 8px inset inside the clipped card');
@@ -124,5 +127,38 @@ async function fixture({url='https://www.youtube.com/shorts/one',cards=[],saved=
   h.w.history.pushState({},'', '/shorts/watch-transition');
   await h.scan();
   assert.equal(h.host.style.display,'block','SPA navigation to Shorts enables the Shorts controls');
+
+  h=await fixture({url:'https://www.youtube.com/watch?v=root-overflow',markup:'<div id="html5-video-player" class="html5-video-player"><div class="ytp-progress-bar"></div><video id="video0" style="position:fixed"></video></div>',saved:{speed:1.5},rootOverflow:true,rootRect:{left:0,top:0,right:1280,bottom:0,width:1280,height:0}});
+  video=h.w.document.getElementById('video0');
+  assert.equal(video.playbackRate,1.5,'root overflow bounds do not hide an ordinary fixed player');
+  assert.equal(h.host.style.display,'block','root overflow bounds do not hide the ordinary video controls');
+
+  h=await fixture({url:'https://www.youtube.com/watch?v=fixed-overflow-wrapper',markup:'<div id="shell" style="overflow:hidden;height:0"><div class="html5-video-player"><div class="ytp-progress-bar"></div><video id="video0" style="position:fixed"></video></div></div>',saved:{speed:1.5},extraRects:{shell:{left:0,top:0,right:1280,bottom:0,width:1280,height:0}}});
+  video=h.w.document.getElementById('video0');
+  assert.equal(video.playbackRate,1.5,'a static overflow wrapper does not clip a fixed video outside its containing block');
+  assert.equal(h.host.style.display,'block','an overflow wrapper does not hide controls for a fixed video that escapes it');
+
+  h=await fixture({url:'https://www.youtube.com/shorts/unknown-layout',markup:'<yt-shorts-video-view-model><video id="video0"></video></yt-shorts-video-view-model>',saved:{speed:1.5}});
+  video=h.w.document.getElementById('video0');
+  assert.equal(video.playbackRate,1.5,'a visible Shorts video is selected when its renderer tag is unknown');
+  assert.equal(h.host.style.display,'block','a visible Shorts video gets controls when its renderer tag is unknown');
+
+  h=await fixture({url:'https://www.youtube.com/shorts/non-box-clip',markup:'<div id="shell" style="display:contents;overflow:hidden"><ytd-reel-video-renderer is-active="true"><video id="video0"></video></ytd-reel-video-renderer></div>',saved:{speed:1.5},extraRects:{shell:{left:0,top:0,right:0,bottom:0,width:0,height:0}}});
+  video=h.w.document.getElementById('video0');
+  assert.equal(video.playbackRate,1.5,'overflow on a display:contents wrapper does not hide a Short');
+  assert.equal(h.host.style.display,'block','a non-box wrapper does not clip Shorts controls');
+
+  h=await fixture({markup:'<div id="shell" style="display:block;overflow:hidden"><div id="player" style="position:fixed"><ytd-reel-video-renderer is-active="true"><video id="video0"></video></ytd-reel-video-renderer></div></div>',saved:{speed:1.5},extraRects:{shell:{left:0,top:0,right:1280,bottom:0,width:1280,height:0}}});
+  video=h.w.document.getElementById('video0');
+  assert.equal(video.playbackRate,1.5,'a fixed player escapes an outer static overflow clip on Shorts');
+  assert.equal(h.host.style.display,'block','an outer static overflow clip does not hide fixed-player Shorts controls');
+
+  h=await fixture({markup:'<div id="shell" style="display:block;overflow:hidden"><div id="player" style="position:absolute"><ytd-reel-video-renderer is-active="true"><video id="video0"></video></ytd-reel-video-renderer></div></div>',saved:{speed:1.5},extraRects:{shell:{left:0,top:0,right:1280,bottom:0,width:1280,height:0}}});
+  video=h.w.document.getElementById('video0');
+  assert.equal(video.playbackRate,1.5,'an absolute player escapes an outer static overflow clip on Shorts');
+  assert.equal(h.host.style.display,'block','an outer static overflow clip does not hide absolute-player Shorts controls');
+
+  h=await fixture({markup:'<ytd-reel-video-renderer is-active><div id="player" style="position:fixed;height:0;overflow:hidden"><video id="video0"></video></div></ytd-reel-video-renderer>',extraRects:{player:{left:0,top:0,right:1280,bottom:0,width:1280,height:0}},allowMissingHost:true});
+  assert.equal(h.host?.style.display||'none','none','overflow on the fixed player still clips its child video');
   console.log('Shorts selection, controls, inheritance, reuse, visibility, and watch route: passed');
 })().catch(error=>{console.error(error);process.exitCode=1;});

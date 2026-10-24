@@ -140,18 +140,24 @@ Requires **Node.js 22.12+** (24 recommended) and npm. ZIP packaging requires Pyt
 npm ci --ignore-scripts
 npm run check
 npm test
+npx playwright install chromium
+npm run test:browser
 python scripts/package.py
 ```
 
-The installable ZIP is written to `dist/youtube-fast-skipper-2.10.0.zip`.
+The installable ZIP is written to `dist/youtube-fast-skipper-2.10.1.zip`.
 Packaging uses an explicit file list to keep tests, dependencies, and personal
 files out of the installable package. No build step is needed to run the extension.
-`dist/youtube-fast-skipper-source-2.10.0.zip` contains the source and documentation
+`dist/youtube-fast-skipper-source-2.10.1.zip` contains the source and documentation
 for sharing on GitHub, without installed dependencies or local Git history.
 
 Tests cover audio restoration, button selection, retries, worker checks,
-preferences, Shorts navigation, and interfaces. They run locally with simulated DOM and browser
-APIs; passing tests alone does not prove the outcome on real ads. After player
+preferences, Shorts navigation, and interfaces. The unit suites use simulated
+DOM and browser APIs. The browser suite uses isolated Chromium pages served by
+local fixtures to check layout, visible controls, and actual clicks. It does not
+open YouTube or reuse your browser profile. To use an existing Chrome executable
+instead of downloading Chromium, set the `CHROME_PATH` environment variable.
+Passing tests alone does not prove the outcome on real YouTube pages. After player
 changes, manually verify skipping, audio, and playback speed on YouTube.
 
 GitHub Actions runs validation and generates ZIP artifacts on pushes and pull

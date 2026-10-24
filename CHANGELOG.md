@@ -1,5 +1,12 @@
 # Changelog
 
+## 2.10.1 — 2026-10-24
+
+- Fixed a 2.10.0 regression that could hide the speed controls on regular videos and Shorts.
+- Corrected visibility handling for viewport-positioned players and non-box layout ancestors.
+- Added a visible-video fallback for Shorts layouts without the expected renderer wrapper.
+- Added real-browser regression checks for panel visibility and clickability to CI.
+
 ## 2.10.0 — 2026-10-22
 
 - Added playback speed controls for YouTube Shorts.

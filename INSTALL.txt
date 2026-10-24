@@ -1,4 +1,4 @@
-YOUTUBE FAST SKIPPER — v2.10.0
+YOUTUBE FAST SKIPPER — v2.10.1
 
 AN ALTERNATIVE TO AD BLOCKERS
 Ads continue loading; playback is controlled inside the player.
